@@ -10,9 +10,9 @@
 <body>
 <div id="map-canvas"></div>
 <script type="text/javascript">
-var map;
-var BusArray = new Array();
-var WaypointArray = new Array();
+BusArray = new Array();
+WaypointArray = new Array();
+Routes = new Array();
 function Bus() {
 	this.BusId;
 	this.Name;
@@ -25,15 +25,31 @@ function Bus() {
 	this.ArrivalTimeRemaining;
 	this.Marker;
 	this.icon;
+	this.ShowWindow = ShowWindow;
+	function ShowWindow(thisvar) {
+		this.infoWindow.open(map, this);
+	}
 	this.update = update;
 	function update(){
-		this.Marker.setMap(null);
-		this.Marker = new google.maps.Marker({
-			position: new google.maps.LatLng(this.Latitude,this.Longitude),
-			map: map,
-			title: this.Title,
-			icon: this.icon
-		});
+		//infoContent = "<b><i>" + this.Name + "</i></b><br><b>Velocity:</b> " + this.Veloctiy; //+ "<br><b>Last Waypoint:</b> " + WaypointArray[Routes[this.RouteId][this.LastWaypointIndex]].Name;
+		if ( typeof this.Marker != 'undefined' ) {
+			this.Marker.setPosition(new google.maps.LatLng(this.Latitude,this.Longitude));
+			this.infoWindow.setContent("<b><i>" + this.Name + "</i></b><br><b>Velocity:</b> " + this.Veloctiy);
+		} else {
+			this.Title = this.Name;
+			this.infoWindow = new google.maps.InfoWindow({
+				content: "<b><i>" + this.Name + "</i></b><br><b>Velocity:</b> " + this.Veloctiy
+			});
+			this.Marker = new google.maps.Marker({
+				position: new google.maps.LatLng(this.Latitude,this.Longitude),
+				map: map,
+				title: this.Title,
+				labelContent: this.Velocity,
+				icon: this.icon,
+				infoWindow: this.infoWindow
+			});
+			google.maps.event.addListener(this.Marker, 'click', this.ShowWindow);
+		}
 	}
 	this.setIcon = setIcon;
 	function setIcon(){
@@ -49,6 +65,10 @@ function Waypoint(Information) {
 	this.Name = Information["Name"];
 	this.Latitude = Information["Latitude"];
 	this.Longitude = Information["Longitude"];
+	for ( var WIndex = 0; WIndex < Information["WaypointMaps"]; WIndex++ ) {
+		DataArray = Information["WaypointMaps"][WIndex];
+		Routes[DataArray["RouteId"]][DataArray["WaypointIndex"]] = DataArray["WaypointId"];
+	}
 	if ( Information["WaypointMaps"].length == 2 && Information["WaypointMaps"][0]["RouteId"] != Information["WaypointMaps"][1]["RouteId"] ) {
 		this.Icon = "bus_stop.png";
 	} else {
@@ -71,13 +91,20 @@ function UpdateLocation() {
 		if ( xmlhttp.readyState == 4 && xmlhttp.status == 200 ) {
 			LocationInfo = JSON.parse(xmlhttp.responseText);
 			for ( var index = 0; index < LocationInfo.length; index++ ) {
-				
+				BAIndex = LocationInfo[index]["BusId"];
+				BusArray[BAIndex].Latitude = LocationInfo[index]["Latitude"];
+				BusArray[BAIndex].Longitude = LocationInfo[index]["Longitude"];
+				BusArray[BAIndex].Velocity = LocationInfo[index]["Velocity"];
+				BusArray[BAIndex].LastWaypointIndex = LocationInfo[index]["LastWaypointIndex"];
+				BusArray[BAIndex].LastReceived = LocationInfo[index]["LastReceived"];
+				BusArray[BAIndex].ArrivalTimeRemaining = LocationInfo[index]["ArrivalTimeRemaining"];
+				BusArray[BAIndex].update();
 			}
 		} else if ( xmlhttp.readyState == 4 && xmlhttp.status != 200 ) {
 			window.alert("Error accessing bus information");
 		}
 	}
-	xmlhttp.open("GET","http://www.niar.wichita.edu/webservices/bus/api/bus",true);
+	xmlhttp.open("GET","http://www.niar.wichita.edu/webservices/bus/api/buslocation?timeactive=1",true);
 	xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 	xmlhttp.send();
 }
@@ -91,12 +118,14 @@ function GetStaticInfo() {
 		if ( xmlhttp.readyState == 4 && xmlhttp.status == 200 ) {
 			BusInfo = JSON.parse(xmlhttp.responseText);
 			for ( var index = 0; index < BusInfo.length; index++ ) {
-				BusArray[index] = new Bus();
-				BusArray[index].BusId = BusInfo[index]["BusId"];
-				BusArray[index].Name = BusInfo[index]["Name"];
-				BusArray[index].RouteId = BusInfo[index]["RouteId"];
-				BusArray[index].setIcon();
+				BAIndex = BusInfo[index]["BusId"];
+				BusArray[BAIndex] = new Bus();
+				BusArray[BAIndex].BusId = BusInfo[index]["BusId"];
+				BusArray[BAIndex].Name = BusInfo[index]["Name"];
+				BusArray[BAIndex].RouteId = BusInfo[index]["RouteId"];
+				BusArray[BAIndex].setIcon();
 			}
+			window.setInterval(UpdateLocation,500);
 		} else if ( xmlhttp.readyState == 4 && xmlhttp.status != 200 ) {
 			window.alert("Error accessing bus information");
 		}
@@ -113,7 +142,7 @@ function GetStaticInfo() {
 		if ( xmlhttp2.readyState == 4 && xmlhttp2.status == 200 ) {
 			WaypointInfo = JSON.parse(xmlhttp2.responseText);
 			for ( var index2 = 0; index2 < WaypointInfo.length; index2++ ) {
-				WaypointArray[index2] = new Waypoint(WaypointInfo[index2]);
+				WaypointArray[WaypointInfo[index2]["WaypointId"]] = new Waypoint(WaypointInfo[index2]);
 			}
 		} else if ( xmlhttp2.readyState == 4 && xmlhttp2.status != 200 ) {
 			window.alert("Error accessing bus information");
@@ -130,12 +159,6 @@ function initialize() {
 	};
 	map = new google.maps.Map(document.getElementById('map-canvas'),mapOptions);
 	GetStaticInfo();
-	var marker = new google.maps.Marker({
-		position: new google.maps.LatLng(37.720,-97.290),
-		map: map,
-		title: "Test",
-		icon: "bus_1.png"
-	});
 }
 google.maps.event.addDomListener(window, 'load', initialize);
 </script>
