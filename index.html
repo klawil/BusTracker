@@ -42,7 +42,7 @@ function Bus() {
 			}
 			AddString = "<br><b>Next:</b> " + WaypointArray[Routes[this.RouteId][WPIndex]].Name;
 		}
-		infoContent = "<b><i>" + this.Name + "</i></b><br><b>Velocity:</b> " + this.Velocity + AddString;
+		infoContent = "<b><i>" + this.Name + "</i></b><br><b>Velocity:</b> " + this.Velocity + AddString + "<br><b>Time to Next:</b> " + this.ArrivalTimeRemaining + "s";
 		if ( typeof this.Marker != 'undefined' ) {
 			this.Marker.setPosition(new google.maps.LatLng(this.Latitude,this.Longitude));
 			this.infoWindow.setContent(infoContent);
