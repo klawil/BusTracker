@@ -10,13 +10,93 @@
 <body>
 <div id="map-canvas"></div>
 <script type="text/javascript">
+var map;
+var BusArray = new Array();
+function Bus() {
+	this.BusId;
+	this.Name;
+	this.RouteId;
+	this.Latitude;
+	this.Longitude;
+	this.Velocity;
+	this.LastWaypointIndex;
+	this.LastReceived;
+	this.ArrivalTimeRemaining;
+	this.Marker;
+	this.icon;
+	this.update = update;
+	function update(){
+		this.Marker.setMap(null);
+		this.Marker = new google.maps.Marker({
+			position: new google.mapsLatLng(this.Latitude,this.Longitude),
+			map: map,
+			title: this.Title,
+			icon: this.icon
+		});
+	}
+	this.setIcon = setIcon;
+	function setIcon(){
+		if ( this.RouteId == 1 ) {
+			this.icon = "bus_1.png";
+		} else {
+			this.icon = "bus_2.png";
+		}
+	}
+}
+function GetStaticInfo() {
+	if ( window.XMLHttpRequest ) {
+		xmlhttp = new XMLHttpRequest();
+	} else {
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.onreadystatechange=function() {
+		if ( xmlhttp.readyState == 4 && xmlhttp.status == 200 ) {
+			BusInfo = JSON.parse(xmlhttp.responseText);
+			for ( var index = 0; index < BusInfo.length; index++ ) {
+				BusArray[index] = new Bus();
+				BusArray[index].BusId = BusInfo[index]["BusId"];
+				BusArray[index].Name = BusInfo[index]["Name"];
+				BusArray[index].RouteId = BusInfo[index]["RouteId"];
+				BusArray[index].setIcon();
+			}
+		} else if ( xmlhttp.readyState == 4 && xmlhttp.status != 200 ) {
+			window.alert("Error accessing bus information");
+		}
+	}
+	xmlhttp.open("GET","http://www.niar.wichita.edu/webservices/bus/api/bus",true);
+	xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+	xmlhttp.send();
+	if ( window.XMLHttpRequest ) {
+		xmlhttp2 = new XMLHttpRequest();
+	} else {
+		xmlhttp2 = new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp2.onreadystatechange=function() {
+		if ( xmlhttp.readyState == 4 && xmlhttp.status == 200 ) {
+			WaypointInfo = JSON.parse(xmlhttp.responseText);
+			window.alert(WaypointInfo[1]["WaypointMaps"][0]["RouteId"] + "\n" + WaypointInfo[1]["WaypointMaps"][1]["RouteId"]);
+		} else if ( xmlhttp.readyState == 4 && xmlhttp.status != 200 ) {
+			window.alert("Error accessing bus information");
+		}
+	}
+	xmlhttp2.open("GET","http://www.niar.wichita.edu/webservices/bus/api/waypoint",true);
+	xmlhttp2.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+	xmlhttp2.send();
+}
 function initialize() {
 	var mapOptions = {
-		center: { lat: 37.7265, lng: -97.284},
-		zoom: 15
+		center: { lat: 37.719419, lng: -97.289713},
+		zoom: 16
 	};
 	var map = new google.maps.Map(document.getElementById('map-canvas'),mapOptions);
+	var marker = new google.maps.Marker({
+		position: new google.maps.LatLng(37.720,-97.290),
+		map: map,
+		title: "Test",
+		icon: "bus_1.png"
+	});
 }
 google.maps.event.addDomListener(window, 'load', initialize);
+GetStaticInfo();
 </script>
 </body>
