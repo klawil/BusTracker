@@ -28,9 +28,14 @@ function Bus() {
 	this.ArrivalTimeRemaining;
 	this.Marker;
 	this.icon;
+	this.CloseWindow = CloseWindow;
+	function CloseWindow(thisvar) {
+		thisvar.infoWindow.close();
+	}
 	this.ShowWindow = ShowWindow;
-	function ShowWindow(thisvar) {
+	function ShowWindow() {
 		this.infoWindow.open(map, this);
+		window.setTimeout(this.CloseWindow,3000,this);
 	}
 	this.update = update;
 	function update(){
@@ -57,7 +62,9 @@ function Bus() {
 				title: this.Title,
 				labelContent: this.Velocity,
 				icon: this.icon,
-				infoWindow: this.infoWindow
+				infoWindow: this.infoWindow,
+				zIndex: google.maps.Marker.MAX_ZINDEX,
+				CloseWindow: this.CloseWindow
 			});
 			google.maps.event.addListener(this.Marker, 'click', this.ShowWindow);
 		}
@@ -85,12 +92,28 @@ function Waypoint(Information) {
 	} else {
 		this.Icon = "bus_stop" + Information["WaypointMaps"][0]["RouteId"] + ".png";
 	}
+	this.CloseWindow = CloseWindow;
+	function CloseWindow(thisvar) {
+		thisvar.infoWindow.close();
+	}
+	this.ShowWindow = ShowWindow;
+	function ShowWindow() {
+		this.infoWindow.open(map, this);
+		window.setTimeout(this.CloseWindow,3000,this);
+	}
+	this.infoWindow = this.infoWindow = new google.maps.InfoWindow({
+		content: "<b><i>" + this.Name + "</i></b>"
+	});
 	this.Marker = new google.maps.Marker({
 		position: new google.maps.LatLng(this.Latitude,this.Longitude),
 		map: map,
 		title: this.Name,
-		icon: this.Icon
+		icon: this.Icon,
+		infoWindow: this.infoWindow,
+		zIndex: google.maps.Marker.MAX_ZINDEX - 1,
+		CloseWindow: this.CloseWindow
 	});
+	google.maps.event.addListener(this.Marker, 'click', this.ShowWindow);
 }
 function UpdateLocation() {
 	if ( DoContinue != 1 ) {
@@ -119,7 +142,7 @@ function UpdateLocation() {
 				return 0;
 			}
 			DoContinue = 0;
-			window.alert("Error accessing bus information");
+			window.alert("Error accessing location information");
 		}
 	}
 	xmlhttp.open("GET","http://www.niar.wichita.edu/webservices/bus/api/buslocation?timeactive=1",true);
@@ -171,7 +194,7 @@ function GetStaticInfo() {
 				return 0;
 			}
 			DoContinue = 0;
-			window.alert("Error accessing bus information");
+			window.alert("Error accessing waypoint information");
 		}
 	}
 	xmlhttp2.open("GET","http://www.niar.wichita.edu/webservices/bus/api/waypoint",true);
