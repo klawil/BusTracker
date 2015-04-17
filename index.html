@@ -16,6 +16,7 @@ WaypointArray = new Array();
 Routes = new Array();
 Routes[1] = new Array();
 Routes[2] = new Array();
+timeout = 3000;
 function Bus() {
 	this.BusId;
 	this.Name;
@@ -35,7 +36,7 @@ function Bus() {
 	this.ShowWindow = ShowWindow;
 	function ShowWindow() {
 		this.infoWindow.open(map, this);
-		window.setTimeout(this.CloseWindow,3000,this);
+		window.setTimeout(this.CloseWindow,timeout,this);
 	}
 	this.update = update;
 	function update(){
@@ -99,7 +100,7 @@ function Waypoint(Information) {
 	this.ShowWindow = ShowWindow;
 	function ShowWindow() {
 		this.infoWindow.open(map, this);
-		window.setTimeout(this.CloseWindow,3000,this);
+		window.setTimeout(this.CloseWindow,timeout,this);
 	}
 	this.infoWindow = this.infoWindow = new google.maps.InfoWindow({
 		content: "<b><i>" + this.Name + "</i></b>"
