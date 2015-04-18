@@ -16,7 +16,7 @@ WaypointArray = new Array();
 Routes = new Array();
 Routes[1] = new Array();
 Routes[2] = new Array();
-timeout = 3000;
+timeout = 3;
 function Bus() {
 	this.BusId;
 	this.Name;
@@ -36,7 +36,9 @@ function Bus() {
 	this.ShowWindow = ShowWindow;
 	function ShowWindow() {
 		this.infoWindow.open(map, this);
-		window.setTimeout(this.CloseWindow,timeout,this);
+		if ( timeout != 0 ) {
+			window.setTimeout(this.CloseWindow,timeout * 1000,this);
+		}
 	}
 	this.update = update;
 	function update(){
@@ -100,7 +102,9 @@ function Waypoint(Information) {
 	this.ShowWindow = ShowWindow;
 	function ShowWindow() {
 		this.infoWindow.open(map, this);
-		window.setTimeout(this.CloseWindow,timeout,this);
+		if ( timeout != 0 ) {
+			window.setTimeout(this.CloseWindow,timeout * 1000,this);
+		}
 	}
 	this.infoWindow = this.infoWindow = new google.maps.InfoWindow({
 		content: "<b><i>" + this.Name + "</i></b>"
@@ -207,7 +211,21 @@ function initialize() {
 		center: { lat: 37.719419, lng: -97.289713},
 		zoom: 16
 	};
+	//37.737520, -97.276336
 	map = new google.maps.Map(document.getElementById('map-canvas'),mapOptions);
+	
+	var CampusBounds = new google.maps.LatLngBounds(
+		new google.maps.LatLng(37.715116, -97.301354),
+		new google.maps.LatLng(37.724570, -97.289146));
+	CampusRoute = new google.maps.GroundOverlay("campus_route.png",CampusBounds);
+	CampusRoute.setMap(map);
+	
+	var MetroBounds = new google.maps.LatLngBounds(
+		new google.maps.LatLng(37.716231, -97.298213), // Down, Right; BL
+		new google.maps.LatLng(37.737755, -97.277046)); //Down, Right; TR
+	MetroRoute = new google.maps.GroundOverlay("metroplex_route.png",MetroBounds);
+	MetroRoute.setMap(map);
+	
 	GetStaticInfo();
 }
 google.maps.event.addDomListener(window, 'load', initialize);
